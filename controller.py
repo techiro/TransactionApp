@@ -23,15 +23,19 @@ class DB_Controller(object):
             if response == self.TRANSACTION_MANAGER:
                 print("transaction_managerを確認します")
                 self.DB.check_transaction()
+                self.DB.disconnect_DB()
                 
 
             elif response == self.ACCOUNT_MANAGER:
                 print("account_managerを確認します")
                 self.DB.check_account()
+                self.DB.disconnect_DB()
 
             elif response == self.END_MENU:
                 print("システムを終了します")
+                self.DB.disconnectDB()
                 sys.exit()
+
             
             else:
                 print("----------もう一度入力を行ってください----------")
