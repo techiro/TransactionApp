@@ -22,6 +22,7 @@ class DB_Model(object):
         CREATE TABLE IF NOT EXISTS "account" (
         "id"	INTEGER,
         "name"	TEXT,
+        "bank_name"　TEXT,
         "money"	INTEGER
         );
         """
@@ -32,7 +33,8 @@ class DB_Model(object):
     ADD_TRANSACTION = "3"
     BACK_MENU = "b"
 
-    COLUMN_NAME = "|   'customer'   |  'deadline'   |  'money'"
+    TRANSACTION_COLUMN_NAME = "|   '請求先'   |  '締め切り'   |  '金額'"
+    ACCOUNT_COLUM_NAME = "| '銀行名' | '金額'"
     column = []
 
     def __init__(self, db_path):
@@ -48,8 +50,6 @@ class DB_Model(object):
 
         self.cursor.execute(self.TRANSACTIONS_TABLE)
         self.cursor.execute(self.ACCOUNT_TABLE)
-
-    
 
     def check_transaction(self):
         print("This is check_transaction")
@@ -69,7 +69,7 @@ class DB_Model(object):
             if response == self.CHECK_TRANSACTION:
                 print("取引一覧を表示します")
                 print('{0}様の取引履歴'.format(self.account_name))
-                print(self.COLUMN_NAME)
+                print(self.TRANSACTION_COLUMN_NAME)
                 b=self.cursor.execute("SELECT customer,deadline,money FROM transactions WHERE name=?",('{0}'.format(self.account_name),))
                 # 中身を全て取得するfetchall()を使って、printする。
                 self.print_fech_data(b)
@@ -79,12 +79,12 @@ class DB_Model(object):
                 print('{0}様の見込み利益\n'.format(self.account_name))
 
                 result = self.cursor.execute("SELECT TOTAL(money) FROM transactions WHERE name=?",('{0}'.format(self.account_name),))
-                money = self.return_list_data(result)
+                money = int(self.return_list_data(result))
                 print('{0} 万円'.format(money))
 
             elif response == self.ADD_TRANSACTION:
                 print("取引を追加します")
-                add_id = db.table_counted_row("transactions")
+                add_id = int(db.table_counted_row("transactions"))
                 add_date = str(datetime.datetime.now())
                 print("誰に請求しますか？")
                 add_distination = input()
@@ -139,11 +139,50 @@ class DB_Model(object):
             response = input()
             if response == self.CHECK_ACCOUNT:
                 print("accountを確認します")
-                result = self.cursor.execute("SELECT * FROM account ORDER BY id")
-                self.print_fech_data(result)
+                #アカウント名を使用してそのデータのみを表示させる。
+                # result = self.cursor.execute("SELECT * FROM account ORDER BY id")
+                # self.print_fech_data(result)
+                b=self.cursor.execute("SELECT bank_name,money FROM account WHERE name=?",('{0}'.format(self.account_name),))
+                # 中身を全て取得するfetchall()を使って、printする。
+                print(self.ACCOUNT_COLUM_NAME)
+                self.print_fech_data(b)
+
 
             elif response == self.DEPOSIT_ACCOUNT:
-                print("This is deposit func")
+                print("口座に入金します。〇〇様の口座にいくら入金されますか？")
+                print("入金する口座名を入力してください")
+                add_account = input()
+                # print("いくら入金しますか？")
+                # add_money = input()
+
+                current_money = self.cursor.execute("SELECT money FROM account WHERE name=? AND bank_name=?",('{0}'.format(self.account_name),'{0}'.format(add_account)))
+
+                remain_money = self.return_list_data(current_money)
+                print("{0} 万円口座にあります。".format(remain_money))
+                
+                print("いくら入金しますか？")
+                add_money = int(input())
+                total_money = int(remain_money) + add_money
+                self.cursor.execute('UPDATE account SET money=? WHERE name=? and bank_name=?',(total_money,'{0}'.format(self.account_name),'{0}'.format(add_account)))
+                
+                print("""口座名:{distination:>20}銀行へ\n金額：{money:>20}万円\nを入金します。よろしければ  y  キャンセルする場合は  n  を入力してください""".format(distination=add_account,money=add_money))
+                
+                while True:
+                    apply = input()
+                    if apply == "y":
+                        self.db.commit()
+                        print("登録が完了しました。")
+                        break
+                    elif apply == "n":
+                        print("メニューに戻ります")
+                        break
+                    else:
+                        print("よろしければ  y  キャンセルする場合は  n  を入力してください")
+                # self.cursor.execute(insert_transaction, add_data)
+
+                # print("""宛先:{distination:>20}様へ\n締め切り：{deadline:>20}\n金額：{money:>20}万円\nを請求します。よろしければ  y  キャンセルする場合は  n  を入力してください""".format(distination=add_distination,deadline=add_deadline,money=add_money))
+                
+
 
             elif response == self.BACK_MENU:
                     print("メニューに戻ります")
@@ -180,9 +219,13 @@ class DB_Model(object):
 
     def return_list_data(self,result_tuple, number=0):
         #第二引数は入力がなければ0がはいる。
-        for row_t in result_tuple:
-            count_l = list(row_t)
-        return int(count_l[number])
+        try:
+            for row_t in result_tuple:
+                count_l = list(row_t)
+            return count_l[number]
+        except :
+            print("errorが発生しました。")
+
 
 
     def disconnect_DB(self):
