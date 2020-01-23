@@ -51,6 +51,20 @@ class DB_Model(object):
         self.cursor.execute(self.TRANSACTIONS_TABLE)
         self.cursor.execute(self.ACCOUNT_TABLE)
 
+    def auth(self):
+        
+        t_password=self.cursor.execute("SELECT password FROM authdata WHERE name=?",('{0}'.format(self.account_name),))
+        
+        db_password = self.return_list_data(t_password)
+        if db_password == self.input_password:
+            print("認証完了")
+            return True
+
+        else:
+            print("認証失敗")
+            return False
+
+        
     def check_transaction(self):
         print("This is check_transaction")
 
@@ -140,10 +154,13 @@ class DB_Model(object):
             if response == self.CHECK_ACCOUNT:
                 print("accountを確認します")
                 
-                b=self.cursor.execute("SELECT bank_name,money FROM account WHERE name=?",('{0}'.format(self.account_name),))
+                account=self.cursor.execute("SELECT bank_name,money FROM account WHERE name=?",('{0}'.format(self.account_name),))
+                money = self.cursor.execute("SELECT bank_name,money FROM account WHERE name=?",('{0}'.format(self.account_name),))
                 # 中身を全て取得するfetchall()を使って、printする。
                 print(self.ACCOUNT_COLUM_NAME)
-                self.print_fech_data(b)
+                self.print_fech_data(account)
+                print("出金予定金額")
+                
 
 
             elif response == self.DEPOSIT_ACCOUNT:
@@ -156,14 +173,11 @@ class DB_Model(object):
                     hasData = self.cursor.fetchall()
                     if len(hasData) == 0:
                         print("データが存在しません。もう一度入力してください")
-                    
                     else:
 
                         current_money = self.cursor.execute("SELECT money FROM account WHERE name=? AND bank_name=?",('{0}'.format(self.account_name),'{0}'.format(add_account)))
                         remain_money = self.return_list_data(current_money)
                         print("{0} 万円口座にあります。".format(remain_money))
-                        print("remain_money↓")
-                        print(type(remain_money))
                         print("いくら入金しますか？")
                         add_money = int(input())
                         print("add_money↓")
@@ -179,7 +193,7 @@ class DB_Model(object):
                     if apply == "y":
                         self.db.commit()
                         print("登録が完了しました。")
-                        
+                        break
                     elif apply == "n":
                         print("もう一度入力してください。")
                         break
@@ -241,7 +255,8 @@ if __name__ == "__main__":
     db = DB_Model("sample_db.sqlite")
     db.db_init()
     db.account_name = "tanaka"
-    db.check_transaction()
+    db.input_password = "0000"
+    db.auth()
     # db.check_account()
     # b = db.table_counted_row("transactions")
     # print(type(b))
