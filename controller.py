@@ -30,12 +30,12 @@ class DB_Controller(object):
                     response = input()
                     
                     if response == self.TRANSACTION_MANAGER:
-                        print("transaction_managerを確認します")
+                        print("取引マネージャーを確認します")
                         self.DB.check_transaction()
                         
 
                     elif response == self.ACCOUNT_MANAGER:
-                        print("account_managerを確認します")
+                        print("口座マネージャーを確認します")
                         self.DB.check_account()
 
                     elif response == self.END_MENU:

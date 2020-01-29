@@ -1,8 +1,5 @@
 # sqlite3 標準モジュールをインポート
 import sqlite3
-import pandas
-import constants
-import logging
 import datetime
 
 class DB_Model(object):
@@ -66,7 +63,6 @@ class DB_Model(object):
 
         
     def check_transaction(self):
-        print("This is check_transaction")
 
         while True:
             print("==========================")
@@ -116,13 +112,15 @@ class DB_Model(object):
                             add_deadline,
                             add_money
                             )
-                self.cursor.execute(insert_transaction, add_data)
-
+                
+                print("==========================\n")
                 print("""宛先:{distination:>20}様へ\n締め切り：{deadline:>20}\n金額：{money:>20}万円\nを請求します。よろしければ  y  キャンセルする場合は  n  を入力してください""".format(distination=add_distination,deadline=add_deadline,money=add_money))
+                print("==========================\n")
                 
                 while True:
                     apply = input()
                     if apply == "y":
+                        self.cursor.execute(insert_transaction, add_data)
                         self.db.commit()
                         print("登録が完了しました。")
                         break
@@ -141,7 +139,6 @@ class DB_Model(object):
             
 
     def check_account(self):
-        print("This is check_account")
 
         while True:
             print("==========================")
@@ -153,13 +150,16 @@ class DB_Model(object):
             response = input()
             if response == self.CHECK_ACCOUNT:
                 print("accountを確認します")
-                
+                print("==========================\n")
                 account=self.cursor.execute("SELECT bank_name,money FROM account WHERE name=?",('{0}'.format(self.account_name),))
                 money = self.cursor.execute("SELECT bank_name,money FROM account WHERE name=?",('{0}'.format(self.account_name),))
                 # 中身を全て取得するfetchall()を使って、printする。
                 print(self.ACCOUNT_COLUM_NAME)
                 self.print_fech_data(account)
                 print("出金予定金額")
+                result = self.cursor.execute("SELECT TOTAL(money) FROM transactions WHERE customer=?",('{0}'.format(self.account_name),))
+                money = int(self.return_list_data(result))
+                print('{0} 万円'.format(money))
                 
 
 
@@ -180,22 +180,24 @@ class DB_Model(object):
                         print("{0} 万円口座にあります。".format(remain_money))
                         print("いくら入金しますか？")
                         add_money = int(input())
-                        print("add_money↓")
-                        print(type(add_money))
+                        # print("add_money↓")
+                        # print(type(add_money))
                         total_money = int(remain_money) + add_money
-                        self.cursor.execute('UPDATE account SET money=? WHERE name=? and bank_name=?',(total_money,'{0}'.format(self.account_name),'{0}'.format(add_account)))
                         
+                        print("==========================\n")
                         print("""口座名:{distination:>20}銀行へ\n金額：{money:>20}万円\nを入金します。よろしければ  y  キャンセルする場合は  n  を入力してください""".format(distination=add_account,money=add_money))
+                        print("==========================\n")
                         break
 
                 while True:
                     apply = input()
                     if apply == "y":
+                        self.cursor.execute('UPDATE account SET money=? WHERE name=? and bank_name=?',(total_money,'{0}'.format(self.account_name),'{0}'.format(add_account)))
                         self.db.commit()
                         print("登録が完了しました。")
                         break
                     elif apply == "n":
-                        print("もう一度入力してください。")
+                        print("口座マネージャーに戻ります")
                         break
                     else:
                         print("よろしければ  y  キャンセルする場合は  n  を入力してください")
@@ -207,22 +209,6 @@ class DB_Model(object):
             else:
                 print("もう一度入力を行ってください")
 
-    def insert_transactions_csv(self, csv_path):
-
-        transactions = pandas.read_csv(csv_path)
-        try:
-            for i in range(len(transactions)):
-                set_data = []
-                # pandas で格納されている型は numpy.int64であり、
-                # そのままsqlite3に格納すると
-                if type(person) == numpy.int64: 
-                    person = int(person)
-                set_data.append(person)
-                self.cursor.execute("INSERT INTO PERSONS values( ?, ?, ?, ?, ?)", set_data)
-                print("transactions データベースを更新")
-                response = self.cursor.execute("SELECT * FROM transactions;")
-        except sqlite3.ProgrammingError:
-            print("形式の異なるcsvです。間違ったcsvを挿入してないか確認してください")
     def print_fech_data(self, fechdata):
         for t_row in fechdata:
             l_row = list(t_row)
@@ -257,7 +243,7 @@ if __name__ == "__main__":
     db.account_name = "tanaka"
     db.input_password = "0000"
     db.auth()
-    # db.check_account()
+    db.check_account()
     # b = db.table_counted_row("transactions")
     # print(type(b))
     
