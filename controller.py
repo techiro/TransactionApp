@@ -40,6 +40,7 @@ class DB_Controller(object):
 
                     elif response == self.END_MENU:
                         print("システムを終了します")
+                        self.DB.offline()
                         sys.exit()
 
                     

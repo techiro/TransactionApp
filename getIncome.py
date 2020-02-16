@@ -55,13 +55,14 @@ class DB_Model(object):
         db_password = self.return_list_data(t_password)
         if db_password == self.input_password:
             print("認証完了")
+            self.cursor.execute('UPDATE authdata SET online=? WHERE name=? and password=?',("1",'{0}'.format(self.account_name),'{0}'.format(db_password)))
+            self.db.commit()
             return True
 
         else:
             print("認証失敗")
             return False
 
-        
     def check_transaction(self):
 
         while True:
@@ -230,7 +231,9 @@ class DB_Model(object):
             print("errorが発生しました。")
             
 
-
+    def offline(self):
+        self.cursor.execute('UPDATE authdata SET online=? WHERE name=? and password=?',("0",'{0}'.format(self.account_name),'{0}'.format(self.input_password)))
+        self.db.commit()
 
     def disconnect_DB(self):
         self.close()
